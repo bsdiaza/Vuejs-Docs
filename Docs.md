@@ -154,12 +154,124 @@ Esta instancia de Vue producira como resultado un DOM en el cual tanto el el tex
 el texto ingresado a traves del input se encuentran sincronizados en tiempo real.
 
 ## Desarrollando con componentes
+El sistema basado en componentes es otro concepto importabte de Vue, debido a que este metodo de abstraccion permite construir grandes y escalables aplicaciones compuestas de pequeños, modulares y reutilizables componentes. 
 
+![picture](assets/components-structure.png)
 
+En Vue, un componente es en escencia una instancia de Vue con opciones predefinidas. Para registrar un componente se debe declarar sus propiedades y su identificador dentro de Vue.
+
+```javascript
+Vue.component('todo-item', {
+  template: '<li>This is a todo</li>'
+})
+```
+Luego este componente puede ser utilizado dentro de otro por medio de su identifiacdor
+```html
+<ol>
+  <!-- Crear una instancia del componente todo-item -->
+  <todo-item></todo-item>
+</ol>
+```
+pero esto renderizaria el mismo texto para toda instancia del componente todo-item. Haciendo uso de las directivas de 
+Vue este componente puede ser aprovechado de mejor manera, alterando el componente para que poseaa un parametro.
+```javascript
+Vue.component('todo-item', {
+  // The todo-item component now accepts a
+  // "prop", which is like a custom attribute.
+  // This prop is called todo.
+  props: ['todo'],
+  template: '<li>{{ todo.text }}</li>'
+})
+```
+Con este nuevo parametro podemos hacer uso de la directiva `v-bind` y la drectiva `v-for` para iterar sobre un arrelo de objetos.
+```html
+div id="app-7">
+  <ol>
+    <todo-item
+      v-for="item in groceryList"
+      v-bind:todo="item"
+      v-bind:key="item.id"
+    ></todo-item>
+  </ol>
+</div>
+```
+```javascript
+Vue.component('todo-item', {
+  props: ['todo'],
+  template: '<li>{{ todo.text }}</li>'
+})
+
+var app7 = new Vue({
+  el: '#app-7',
+  data: {
+    groceryList: [
+      { id: 0, text: 'Vegetables' },
+      { id: 1, text: 'Cheese' },
+      { id: 2, text: 'Whatever else humans are supposed to eat' }
+    ]
+  }
+})
+```
+DOM
+```
+1. Vegetables
+2. Cheese
+3. Whatever else humans supose to eat
+```
+Aunque este ejemplo es ideal debido al uso del componente a traves de las directivas, en aplicaciones de mayor tamaño es necesario dividir la aplicacion completa en tres componenetes, con el fin de hacerla mas maejable
+```html
+<div id="app">
+  <app-nav></app-nav>
+  <app-view>
+    <app-sidebar></app-sidebar>
+    <app-content></app-content>
+  </app-view>
+</div>
+```
+# Instancia Vue
+## Creando la instancia
+Toda aplicacion en Vue es inicializada crando una nueva instacia de Vue con la funcion
+```javascript
+var vm = new Vue({
+  // opciones
+})
+```
+Cuando una instancia de Vue es creada debe ser atribuido el objeto que contiene las opciones con las cuales sera creada. Una aplicacion en Vue consiste en la raiz de una instancia Vue, opcionalmente organizada en un arbol encadenado de componentes reutilizables. Este arbol puede lucir de esta manera.  
+```
+Root Instance
+└─ TodoList
+   ├─ TodoItem
+   │  ├─ DeleteTodoButton
+   │  └─ EditTodoButton
+   └─ TodoListFooter
+      ├─ ClearTodosButton
+      └─ TodoListStatistics
+```
+## Informacion y metodos
+Cuando una instancia Vue es creada, esta agrega todas las propiedades encontradas en el objeto `data` a sistema reactivo de Vue. Cuando los valores de estas propiedades cambian, la vista reaccionara actualizando para emperejar los nuevos valores.
+```javascript
+// Objeto data
+var data = { a: 1 }
+
+// Se agrega el objeto data a la instancia Vue
+var vm = new Vue({
+  data: data
+})
+
+// Obteniendo la propiedad desde la instancia Vue
+// Retorna el valor del objeto data original
+vm.a == data.a // => true
+
+// Estableciendo la propiedad en la instancia
+// Tambien afecta el objeto original
+vm.a = 2
+data.a // => 2
+
+// y viceversa
+data.a = 3
+vm.a // => 3
+```
+Cuando los atributos cambian, la vista volvera a renderizarce demostrando que las propiedades en el objeto data son unicamente reactivos, pero si estos atributos existan cuando la instancia fue creada. Si un nuevo atributo es declarado despues de la creacion de que la instancia Vue es creada, la aplicacion no "reaccionara" a los cambios de dicho atributo. 
 ```
 ```
-
-```
-```
-
 ```
