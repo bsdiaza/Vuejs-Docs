@@ -596,20 +596,15 @@ var watchExampleVM = new Vue({
     answer: 'I cannot give you an answer until you ask a question!'
   },
   watch: {
-    // whenever question changes, this function will run
+    // Siempre que la pregunta cambie esta funcion sera ejecutada
     question: function (newQuestion, oldQuestion) {
       this.answer = 'Waiting for you to stop typing...'
       this.debouncedGetAnswer()
     }
   },
   created: function () {
-    // _.debounce is a function provided by lodash to limit how
-    // often a particularly expensive operation can be run.
-    // In this case, we want to limit how often we access
-    // yesno.wtf/api, waiting until the user has completely
-    // finished typing before making the ajax request. To learn
-    // more about the _.debounce function (and its cousin
-    // _.throttle), visit: https://lodash.com/docs#debounce
+    // Inicializamos la funcion a ejecutar de cuando el usuario termine de 
+    // escribir su pregunta
     this.debouncedGetAnswer = _.debounce(this.getAnswer, 500)
   },
   methods: {
@@ -634,6 +629,7 @@ var watchExampleVM = new Vue({
 ```
 En este caso, haciendo uso de la opcion de observadores permitira llevar a cabo una operacion asincrona de acceso a la API, limitar que tan frecuentemente ser realizara dicha operacion y establecer estados intermedios hasta que finalmente se obtenga la respuesta final.
 
+# Clases y vinculacion de estilos
 #### Modificadores de eventos
 Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPropagation()` dentro de los elementos que lo soportan, para esto Vue provee modificadores de eventos para la directiva `v-on`.
 * .stop
