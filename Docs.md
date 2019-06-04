@@ -450,18 +450,189 @@ El prefijo `v-` sirve para identificar las directivas de Vue.js, pero estas dire
 <!-- abreviacion con argumentos dinamicos -->
 <a @[event]="doSomething"> ... </a>
 ```
-# Propiedades computadas y observadores
-Las expresiones internas de las plantillas son muy convenientes, pero 
+# Propiedades calculadas y observadores
+## Propiedades calculadas
+Las expresiones internas de las plantillas son muy convenientes, pero, pero estan pensadas para operaciones simples. Agregar demaciada logica a las plantillas puede hacerlas insostenibles e ineficientes. Como:
+```html
+<div id="example">
+  {{ message.split('').reverse().join('') }}
+</div>
 ```
+En este punto la plantilla deja de ser simple y declarativa, y esto puede empeorar si el mensaje revertido es incluido mas de una vez. Para este problema se debe usar la propiedad computed de Vue.
+
+### Ejemplo basico
+```html
+<div id="example">
+  <p>Original message: "{{ message }}"</p>
+  <p>Computed reversed message: "{{ reversedMessage }}"</p>
+</div>
+```javascript
+var vm = new Vue({
+  el: '#example',
+  data: {
+    message: 'Hello'
+  },
+  computed: {
+    // a computed getter
+    reversedMessage: function () {
+      // `this` points to the vm instance
+      return this.message.split('').reverse().join('')
+    }
+  }
+})
 ```
+DOM
+``` 
+Original message: "Hello"
+Computed reversed message: "olleH"
 ```
+En este ejemplo se a declarado las propiedad calculada `reverseMessage`. La funcion que se preovea sera usada como una funcion `getter` para la propiedad `vm.reversedMessage`
+```javascript
+console.log(vm.reversedMessage) // => 'olleH'
+vm.message = 'Goodbye'
+console.log(vm.reversedMessage) // => 'eybdooG'
 ```
+Estas propiedades calculadas pueden ser vinculadas con la directiva v-bind a la plantilla, como una propiedad normal. La instancia Vue es conciente que `vm.reversedMessage` depende de `vm.message`, asi que actualizara cualquier vincualcion realizada a la propiedad `vm.reversedMessage` cuando `vm.message` sea alterado. Pero sin las repercuciones de ejecucion de esta funcion cada vez que se necesite.
+
+### Almacenamiento en cache vs Metodos
+El resultado obtenido anterior mente con propiedades calculadas tambien puede ser obtenido invocando un metodo dentro de una expression en la plantilla de esta manera:
+```html
+<p>Reversed message: "{{ reverseMessage() }}"</p>
 ```
+```javascript
+// en el componente
+methods: {
+  reverseMessage: function () {
+    return this.message.split('').reverse().join('')
+  }
+}
 ```
+En vez de propiedades computadas, puede ser definida la misma funcion como su fuera un metodo. Pero apesar de que el resultado final es el mismo, la principal diferencia en entre estas dos aproximaciones de la solucion es que la propiedad calculada es guardada en cache basada en las reacciones de sus dependencias. La propiedad calculada solo sera re-evaluada cuando alguna de sus dependencias reactivas ha cambiado. En comparacion con la aproximacion por medio de metodos, la cual nunca es vuelta a renderizar.
+
+### Propiedades calculadas vs observadas
+Vue provee una manera mas generica de observar y reaccionar a los cambios de informacion en una instancia Vue: `Observadores de propiedades`. Cuando se tiene alguna propiedad que necesite cambiar basada en otra, suenta tentador hacer un sobre uso de la propiedad `watch`.
+```html
+<!-- watch -->
+<div id="demo">{{ fullName }}</div>
 ```
+```javascript
+<!-- watch -->
+var vm = new Vue({
+  el: '#demo',
+  data: {
+    firstName: 'Foo',
+    lastName: 'Bar',
+    fullName: 'Foo Bar'
+  },
+  watch: {
+    firstName: function (val) {
+      this.fullName = val + ' ' + this.lastName
+    },
+    lastName: function (val) {
+      this.fullName = this.firstName + ' ' + val
+    }
+  }
+})
 ```
+La aproximacion usando la propiedad watch es imperativa y repetitiva comparada con la version calculada.
+```javascript
+var vm = new Vue({
+  el: '#demo',
+  data: {
+    firstName: 'Foo',
+    lastName: 'Bar'
+  },
+  computed: {
+    fullName: function () {
+      return this.firstName + ' ' + this.lastName
+    }
+  }
+})
 ```
+### Setter calculado
+Las propiedades calculadas son por defecto unicamente `getter`, pero tambien puede ser usada como `setter`.
+
+```javascript
+  fullName: {
+    // getter
+    get: function () {
+      return this.firstName + ' ' + this.lastName
+    },
+    // setter
+    set: function (newValue) {
+      var names = newValue.split(' ')
+      this.firstName = names[0]
+      this.lastName = names[names.length - 1]
+    }
+  }
+}
 ```
+De esta manera cuando se llame ejecute `vm.fullName = 'John Doe'`, el `setter` sera invocado y las propiedades `vm.firstName` y `vm.lastName` seran actualizadas respectivamente.
+
+## Observadores
+Mientras que as propiedades calculadas son mas apropiedas en la mayoria de los casos, hay momentos en los que un observador personalizado es necesario. Debido a esto es que Vue provee otras los observadores, estos son utiles cuando se llevan a cabo operaciones asincornas y costosas en respuesta a informacion cambiante.
+
+```html
+<div id="watch-example">
+  <p>
+    Ask a yes/no question:
+    <input v-model="question">
+  </p>
+  <p>{{ answer }}</p>
+</div>
+```
+```html
+<!-- Since there is already a rich ecosystem of ajax libraries    -->
+<!-- and collections of general-purpose utility methods, Vue core -->
+<!-- is able to remain small by not reinventing them. This also   -->
+<!-- gives you the freedom to use what you're familiar with.      -->
+<script src="https://cdn.jsdelivr.net/npm/axios@0.12.0/dist/axios.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lodash@4.13.1/lodash.min.js"></script>
+<script>
+var watchExampleVM = new Vue({
+  el: '#watch-example',
+  data: {
+    question: '',
+    answer: 'I cannot give you an answer until you ask a question!'
+  },
+  watch: {
+    // whenever question changes, this function will run
+    question: function (newQuestion, oldQuestion) {
+      this.answer = 'Waiting for you to stop typing...'
+      this.debouncedGetAnswer()
+    }
+  },
+  created: function () {
+    // _.debounce is a function provided by lodash to limit how
+    // often a particularly expensive operation can be run.
+    // In this case, we want to limit how often we access
+    // yesno.wtf/api, waiting until the user has completely
+    // finished typing before making the ajax request. To learn
+    // more about the _.debounce function (and its cousin
+    // _.throttle), visit: https://lodash.com/docs#debounce
+    this.debouncedGetAnswer = _.debounce(this.getAnswer, 500)
+  },
+  methods: {
+    getAnswer: function () {
+      if (this.question.indexOf('?') === -1) {
+        this.answer = 'Questions usually contain a question mark. ;-)'
+        return
+      }
+      this.answer = 'Thinking...'
+      var vm = this
+      axios.get('https://yesno.wtf/api')
+        .then(function (response) {
+          vm.answer = _.capitalize(response.data.answer)
+        })
+        .catch(function (error) {
+          vm.answer = 'Error! Could not reach the API. ' + error
+        })
+    }
+  }
+})
+</script>
+```
+En este caso, haciendo uso de la opcion de observadores permitira llevar a cabo una operacion asincrona de acceso a la API, limitar que tan frecuentemente ser realizara dicha operacion y establecer estados intermedios hasta que finalmente se obtenga la respuesta final.
 
 #### Modificadores de eventos
 Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPropagation()` dentro de los elementos que lo soportan, para esto Vue provee modificadores de eventos para la directiva `v-on`.
@@ -491,19 +662,4 @@ Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPro
 <!-- solo se activa el evento si el objetivo es el elemnto en si -->
 <!-- ej. no de un elemento hijo -->
 <div v-on:click.self="doThat">...</div>
-```
-
-```
-```
-```
-```
-```
-```
-```
-```
-```
-```
-```
-```
-```
 ```
