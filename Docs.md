@@ -630,32 +630,64 @@ var watchExampleVM = new Vue({
 En este caso, haciendo uso de la opcion de observadores permitira llevar a cabo una operacion asincrona de acceso a la API, limitar que tan frecuentemente ser realizara dicha operacion y establecer estados intermedios hasta que finalmente se obtenga la respuesta final.
 
 # Clases y vinculacion de estilos
-#### Modificadores de eventos
-Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPropagation()` dentro de los elementos que lo soportan, para esto Vue provee modificadores de eventos para la directiva `v-on`.
-* .stop
-* .prevent
-* .capture
-* .self
-* .once
-* .passive
+Una necesidad comun de vinculacion de datos es manipular la lista de clases de un elemento y sus estilos asociados. Dado que ambos son atributos, podemos usar v-bind para establecerlos, solo hace falta calcular el string final con las expresiones. Pero manejar la concatenacion es suceptible a errores, debido a esto cuando `v-bind` es usado con los atributos `class` y `style`. Permitiendo evaluar ademas de strings, objetos o arreglos.
+
+## Vinculacion de clases HTML
+### Sintaxis de objetos 
+Un objeto puede ser usado con la directiva `v-bind:class` para cargar dinamicamente clases:
 ```html
-<!-- La propagacion del evento click sera detenida -->
-<a v-on:click.stop="doThis"></a>
+div v-bind:class="{ active: isActive }"></div>
+```
+Esta sintaxis representa la presencia de la clase `active` sera determinada por la veracidad del valor de la propiedad `isActived`.
 
-<!-- El evento submit no recargara la pagina -->
-<form v-on:submit.prevent="onSubmit"></form>
+Se puede tener multiples clases activas adjuntas teniendo mas campos en el objeto. La vinculacion `v-bind:class` puede coexistir con el atributo plano `class`
 
-<!-- Los modificadores pueden ser encadenados -->
-<a v-on:click.stop.prevent="doThat"></a>
+```html
+<div
+  class="static"
+  v-bind:class="{ active: isActive, 'text-danger': hasError }"
+></div>
+```
+y las propiedades siguientes
+```javascript
+data: {
+  isActive: true,
+  hasError: false
+}
+```
+tendra como resutado el elemento con las clases
+```html
+<div class="static active"></div>
+```
+Cuando las propiedades `isActived` o `hasError` sean alteradas, la lista de clases sera actualizada. 
 
-<!-- Solo la declaracion del modificador -->
-<form v-on:submit.prevent></form>
-
-<!-- uso de capture cuando se desea atrapar un evento -->
-<!-- ej. la activacion de un elemento interno se hace primero aqui antes que en ese elemento -->
-<div v-on:click.capture="doThis">...</div>
-
-<!-- solo se activa el evento si el objetivo es el elemnto en si -->
-<!-- ej. no de un elemento hijo -->
-<div v-on:click.self="doThat">...</div>
+El objeto realcionado no debe ser declarado en el elemento, puede ser declarado como propiedad de la instancia.
+```html
+<div v-bind:class="classObject"></div>
+```
+```javascript
+data: {
+  classObject: {
+    active: true,
+    'text-danger': false
+  }
+}
+```
+a su vez el atributo `class` puede ser declarado con una propiedad calculada.
+```html
+<div v-bind:class="classObject"></div>
+```
+```javascript
+data: {
+  isActive: true,
+  error: null
+},
+computed: {
+  classObject: function () {
+    return {
+      active: this.isActive && !this.error,
+      'text-danger': this.error && this.error.type === 'fatal'
+    }
+  }
+}
 ```
