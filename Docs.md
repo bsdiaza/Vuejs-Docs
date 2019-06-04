@@ -324,7 +324,177 @@ new Vue({
 ```
 Existen las etapas del ciclo de vida de una instancias son: `beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy, destroyed, errorCaptured`.
 Las cuales se pueden ver en este diagrama.
+![picture](assets/lifecycle-diagram.png)
 
+# Sintaxis de plantilla
+Vue.js hace uso de una plantilla basada en la sintaxis HTML que permite vincular declarativamente el DOM renderizado con la instancia Vue corriendo en una capa inferior. Vue compila las plantillas a a funciondes de renderizado de un DOM virtual. Combinando esto con la reactividad del sistema, Vue es capaz de determinar la minima cantidad de componentes que deben ser renderizados de nuevo y aplicar la minima cantidad de cambios al DOM cuando ocurra un cambio de estado.
+
+## Interpolaciones
+### Texto
+La manera mas basica de vincular informacion es la interpolacion de texto usando "corchetes"
+```html
+<span>Message: {{ msg }}</span>
+```
+La etiqueta entre corchetes sera remplazada con el valor de la propiedad `msg` en el correspondiente objeto data, esta etiqueta sera tambien actualizada cuando la propiedad msg cambie. Tambien pueden ser realizadas interpolaciones que no se actualicen usando la directiva `v-once`, pero esto tambien afectara otras vinculaciones en el mismo nodo.
+
+```html
+<span v-once>This will never change: {{ msg }}</span>
+```
+### HTML directo
+los corchetes dobles interpretan la informacion como texto plano, no como HTML, para exponelo como HTML real, es necesario hacer uso de la directiva `v-html`
+
+```html
+<p>Usando corechetes: {{ rawHtml }}</p>
+<p>Usando directiva v-html: <span v-html="rawHtml"></span></p>
+```
+```
+Usando corchetes: <span style="color: black"> This should be black</span>
+Usando directiva v-html: This should be black
+```
+### Atributos
+Los corchetes dobles no pueden ser utilizados en atributos propios de HTML: En vez, se debe usar la directiva `v-bind`:
+```html
+<div v-bind:id="dynamicId"></div>
+```
+En el caso de los atributos booleanos, donde solo su existencia implica el valor `true`.
+
+```html
+<button v-bind:disabled="isButtonDisabled">Button</button>
+```
+Si `isButtonDisabled` tiene el valor de nulo, indefinido o false, el atributo `disabled` no sera incluido in el boton renderizado.Para ello se recomienda usar `v-bind:disabled="!!isButtonDisabled""`, aunque esto se eplicara mas adelante.
+
+### Usando expresiones javascript
+Vue.js soporta el uso de expresiones en javascript dentro de sus vinculaciones.
+
+```javacript
+{{ number + 1 }}
+
+{{ ok ? 'YES' : 'NO' }}
+
+{{ message.split('').reverse().join('') }}
+```
+```html
+<div v-bind:id="'list-' + id"></div>
+```
+Estas expresiones seran evaluadas como codigo en Javascript en el enfoque de la instancia Vue. Pero la vinculacion solo puede tener una simple expresion, asi que estos ejemplos no servirian:
+
+```html
+<!-- Esto es una declaracion, no una expresion -->
+{{ var a = 1 }}
+
+<!-- El control de flujo no funciona -->
+{{ if (ok) { return message } }}
+```
+## Directivas
+Las directivas son atributos especiales declarados con el prefijo `v-`. El valor de un atributo de una directiva se espera que sea una expresion simple en Javascript y su trabajo es reaccionar activamente aplicando los efectos al DOM cuando el valor de su expresion cambie. Como ya lo vimos con la directiva `v-if`
+```html
+<p v-if="seen">Now you see me</p>
+```
+### Argumentos
+Algunas directivas pueden tomar un argumento denotado por dos puntos despues del nombre de la directiva.
+
+```html
+<!-- vincula el atributo href a la propiedad url -->
+<a v-bind:href="url"> ... </a>
+```
+```html
+<!-- vincula el evento click a la funcion doSomething -->
+<a v-on:click="doSomething"> ... </a>
+```
+### Argumentos dinamicos
+El nombre del atributo a vincular tambien puede ser llamado de manera dinamica como una expresion de javascript, agregando los corchetes cuadrados al rededor del nombre del atributo, 
+
+```html
+<a v-bind:[attributeName]="url"> ... </a>
+```
+
+```html
+<a v-on:[eventName]="doSomething"> ... </a>
+```
+Si la propiedad attributeName contuviera el valor href y el la propiedad eventName cuentuviera el valor click, estas expresiones equivaldrian a 
+```html
+<a v-bind:href="url"> ... </a>
+```
+
+```html
+<a v-on:click="doSomething"> ... </a>
+```
+Se espera que los argumentos dinamicos sean te tipo `string`, con la excepcion del valor `null`, donde el valor `null` se puede tomar como una desvinculacion de dicho atributo. Ademas estas expresiones tienen ciertas restricciones de sintaxis debido a que ciertos caracteres o son permitidos dentro de un atributo HTML como espacios o comillas.
+
+### Modificadores
+Modificadores son postfijos especiales denotados por un punto, el cual indica que la directiva debe ser vinculada de manera especial. Por ejemplo el modifiacdor `.prevent` le indica a la directiva `v-on` que llame la funcion `event.preventDefault()` al momento de accionar el evento.
+```html
+<form v-on:submit.prevent="onSubmit"> ... </form>
+```
+## Abreviaciones
+El prefijo `v-` sirve para identificar las directivas de Vue.js, pero estas directivas pueden ser abreviadas.
+### Abreviacion `v-bind`
+```html
+<!-- sintaxis completa -->
+<a v-bind:href="url"> ... </a>
+
+<!-- abreviacion -->
+<a :href="url"> ... </a>
+
+<!-- abreviacion con argumentos dinamicos -->
+<a :[key]="url"> ... </a>
+```
+### Abreviacion `v-on`
+```html
+<!-- sintaxis completa -->
+<a v-on:click="doSomething"> ... </a>
+
+<!-- abreviacion -->
+<a @click="doSomething"> ... </a>
+
+<!-- abreviacion con argumentos dinamicos -->
+<a @[event]="doSomething"> ... </a>
+```
+# Propiedades computadas y observadores
+Las expresiones internas de las plantillas son muy convenientes, pero 
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+
+#### Modificadores de eventos
+Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPropagation()` dentro de los elementos que lo soportan, para esto Vue provee modificadores de eventos para la directiva `v-on`.
+* .stop
+* .prevent
+* .capture
+* .self
+* .once
+* .passive
+```html
+<!-- La propagacion del evento click sera detenida -->
+<a v-on:click.stop="doThis"></a>
+
+<!-- El evento submit no recargara la pagina -->
+<form v-on:submit.prevent="onSubmit"></form>
+
+<!-- Los modificadores pueden ser encadenados -->
+<a v-on:click.stop.prevent="doThat"></a>
+
+<!-- Solo la declaracion del modificador -->
+<form v-on:submit.prevent></form>
+
+<!-- uso de capture cuando se desea atrapar un evento -->
+<!-- ej. la activacion de un elemento interno se hace primero aqui antes que en ese elemento -->
+<div v-on:click.capture="doThis">...</div>
+
+<!-- solo se activa el evento si el objetivo es el elemnto en si -->
+<!-- ej. no de un elemento hijo -->
+<div v-on:click.self="doThat">...</div>
+```
+
+```
+```
 ```
 ```
 ```
