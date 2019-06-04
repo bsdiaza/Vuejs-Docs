@@ -272,6 +272,68 @@ data.a = 3
 vm.a // => 3
 ```
 Cuando los atributos cambian, la vista volvera a renderizarce demostrando que las propiedades en el objeto data son unicamente reactivos, pero si estos atributos existan cuando la instancia fue creada. Si un nuevo atributo es declarado despues de la creacion de que la instancia Vue es creada, la aplicacion no "reaccionara" a los cambios de dicho atributo. 
+
+La unica manera de que la aplicacion no reaccione a los cambios realizados al objeto data con el que se inicializo la propiedad data de la instancia, es haciendo uso de la funcion `Object.freeze()`. Esta funcion previene las propiedades existentes de un objeto sean alteradas posteriormente.
+
+```javascript
+var obj = {
+  foo: 'bar'
+}
+
+Object.freeze(obj)
+
+new Vue({
+  el: '#app',
+  data: obj
+})
+```html
+<div id="app">
+  <p>{{ foo }}</p>
+  <!-- Este metodo no actualizare la variable -->
+  <button v-on:click="foo = 'baz'">Change it</button>
+</div>
+```
+Ademas de las propiedades incluidas en el objeto data, cada instancia Vue expone varias propiedades y metodos por defecto. Estos tienen el prefijo $ para diferenciarlos de los que son definidos al momento del desarrollo.
+```javascript
+var data = { a: 1 }
+var vm = new Vue({
+  el: '#example',
+  data: data
+})
+
+vm.$data === data // => true
+vm.$el === document.getElementById('example') // => true
+
+// $watch is an instance method
+vm.$watch('a', function (newValue, oldValue) {
+  // This callback will be called when `vm.a` changes
+})
+```
+## Ciclos de vida de instancias
+Cada instancia creada pasa por una serie de pasos de inicializacion cuando es creada, como preparar la informacion observable, compilar la plantilla, montar la instancia en el DOM y actualizarlo cuando la informacion vinculada cambie. En cada uno de estos pasos se ejecutan funciones del ciclo de vida de la instancia, permitiendo ejecutiar codigo propio en etapas especificas. Como lo puede ser la funcion `created`.
+```javascript
+new Vue({
+  data: {
+    a: 1
+  },
+  created: function () {
+    // `this` hace referencia a la vista-modelo de la instancia
+    console.log('a is: ' + this.a)
+  }
+})
+```
+Existen las etapas del ciclo de vida de una instancias son: `beforeCreate, created, beforeMount, mounted, beforeUpdate, updated, activated, deactivated, beforeDestroy, destroyed, errorCaptured`.
+Las cuales se pueden ver en este diagrama.
+
+```
+```
+```
+```
+```
+```
+```
+```
+```
 ```
 ```
 ```
