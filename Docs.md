@@ -1090,7 +1090,7 @@ var example2 = new Vue({
   }
 })
 ```
-## Merodos anejados en linea
+## Metodos manejados en linea
 En vez de vincular directamente el nombre de un metodo, tambien estos metodos pueden ser usados como en ejecucion de codigo javascript.
 ```html
 <div id="example-3">
@@ -1124,7 +1124,380 @@ methods: {
 }
 ```
 ## Modificadores de eventos
+Es muy usual necesitar hacer uso de `event.preventDefault()` o de `event.stopPropagation()` dentro de los elementos que lo soportan, para esto Vue provee modificadores de eventos para la directiva `v-on`.
+* .stop
+* .prevent
+* .capture
+* .self
+* .once
+* .passive
+```html
+<!-- La propagacion del evento click sera detenida -->
+<a v-on:click.stop="doThis"></a>
 
+<!-- El evento submit no recargara la pagina -->
+<form v-on:submit.prevent="onSubmit"></form>
+
+<!-- Los modificadores pueden ser encadenados -->
+<a v-on:click.stop.prevent="doThat"></a>
+
+<!-- Solo la declaracion del modificador -->
+<form v-on:submit.prevent></form>
+
+<!-- uso de capture cuando se desea atrapar un evento -->
+<!-- ej. la activacion de un elemento interno se hace primero aqui antes que en ese elemento -->
+<div v-on:click.capture="doThis">...</div>
+
+<!-- solo se activa el evento si el objetivo es el elemnto en si -->
+<!-- ej. no de un elemento hijo -->
+<div v-on:click.self="doThat">...</div>
+```
+## Modificadores de teclas
+Para escuchar eventos de teclas especificas Vue permite añadir modificadores de teclas para `v-on`.
+```html
+<!-- solo ejecuta `vm.submit()` cuando la `tecla` es `Enter` -->
+<input v-on:keyup.enter="submit">
+```
+# Vinculacion de formularios
+La directiva `v-model` puede ser usada para crear una vinculacion de informacion bidireccional en cualquier elemento de entrada html.
+## Texto
+```html
+<input v-model="message" placeholder="edit me">
+<p>Message is: {{ message }}</p>
+```
+Este codigo vinculara en tiempo realla propiedad `value` de el elemento `<input>` con el texto mostrado.
+## Texto multi-linea
+```html
+<span>Multiline message is:</span>
+<p style="white-space: pre-line;">{{ message }}</p>
+<br>
+<textarea v-model="message" placeholder="add multiple lines"></textarea>
+```
+Este ejemplo representara en el elemento`<p>` la inforacion ingresada en el elemento `<textarea>`, incluyendo el formato de saltos de linea.
+## checkbox
+```html
+<input type="checkbox" id="checkbox" v-model="checked">
+<label for="checkbox">{{ checked }}</label>
+```
+Este ejemplo representara en el `<label>` el valor vinculado del checkbox
+```html
+<div id='example-3'>
+  <input type="checkbox" id="jack" value="Jack" v-model="checkedNames">
+  <label for="jack">Jack</label>
+  <input type="checkbox" id="john" value="John" v-model="checkedNames">
+  <label for="john">John</label>
+  <input type="checkbox" id="mike" value="Mike" v-model="checkedNames">
+  <label for="mike">Mike</label>
+  <br>
+  <span>Checked names: {{ checkedNames }}</span>
+</div>
+```
+```javscript
+new Vue({
+  el: '#example-3',
+  data: {
+    checkedNames: []
+  }
+})
+```
+Este ejemplo vincula la propiedad checkedNames como un arreglo que contiene la propiedad `value` de todos los checkbox que se encuentren seleccionados.
+
+## Select
+```html
+<select v-model="selected">
+  <option disabled value="">Please select one</option>
+  <option>A</option>
+  <option>B</option>
+  <option>C</option>
+</select>
+<span>Selected: {{ selected }}</span>
+```
+```javascript
+new Vue({
+  el: '...',
+  data: {
+    selected: ''
+  }
+})
+```
+Este ejemplo visualiza en el elemento `<span>` el valor seleccionado en la entrada `<select>`.
+## Vinculacion de valores
+La vinculacion de valores cuando de las entradas value puede ser personalizada.
+```html
+<!-- seleccion el string 'a' cuando se encuentra validado -->
+<input type="radio" v-model="picked" value="a">
+
+<!-- la variable 'toggle' es de tipo verdadero o falso -->
+<input type="checkbox" v-model="toggle">
+
+<!-- `seleccion el string 'abc' cuando la primera opcion es seleccionada -->
+<select v-model="selected">
+  <option value="abc">ABC</option>
+</select>
+```
+Estos valores tambien pueden ser seleccionados de manera dinamica usando la directiva `v-bind`.
+### checkbox 
+```html
+<input
+  type="checkbox"
+  v-model="toggle"
+  true-value="yes"
+  false-value="no"
+>
+```
+```javascript
+// cuando se encuentra seleccionado
+vm.toggle === 'yes'
+// cuando no se encuentra seleccionado
+vm.toggle === 'no'
+```
+### radio
+```html
+<input type="radio" v-model="pick" v-bind:value="a">
+```
+```javascript
+// cuando se encuentra seleccionado
+vm.pick === vm.a
+```
+### Select Options
+```html
+<select v-model="selected">
+  <option v-bind:value="{ number: 123 }">123</option>
+</select>
+```
+```javascript
+// when selected:
+typeof vm.selected // => 'object'
+vm.selected.number // => 123
+```
+## Modificadores
+### `.lazy`
+Por defecto `v-model` sincroniza el elemento de entrada con la propiedad de Vue despues de cada evento ocurrido en la entrada. El modificador `lazy` hace que este evento se accione despues del evento `change`
+```html
+<!-- ssincronizado despues de "change" en vez de "input" -->
+<input v-model.lazy="msg" >
+```
+### `.number`
+Si se desea que la entrada se transforme automaticamete a tipo numero se puede usar el modificador `number`. 
+```html
+<input v-model.number="age" type="number">
+```
+### `.trim`
+Si se desea eliminar los espacios en blanco se puede adicionar el modificador `trim`.
+```html
+<input v-model.trim="msg">
+```
+# Bases de los componentes
+## Ejemplo base 
+```javascript
+// Define un nuevo componente llamado "button-counter"
+Vue.component('button-counter', {
+  data: function () {
+    return {
+      count: 0
+    }
+  },
+  template: '<button v-on:click="count++">You clicked me {{ count }} times.</button>'
+})
+```
+Los componentes son instancias con nombre de Vue reutilizables. El componente pede ser utilizado como un elemento personalizado dentro de la raiz de la instancia Vue.
+```html
+<div id="components-demo">
+  <button-counter></button-counter>
+</div>
+```
+```javascript
+new Vue({ el: '#components-demo' })
+```
+Debido a que los componentes son instancias reutilizables de Vue, estos aceptan las mismas opciones `new Vue`, como `data`, `computed`, `watch`, `methods` y etapas del ciclo de vida. 
+
+## reusando componentes
+Los componentes pueden ser reutilizados las veces que se deseem debido a que Vue los transforma a elementos propios del proyecto que pueden ser llamados en cualquier momento.
+```html
+<div id="components-demo">
+  <button-counter></button-counter>
+  <button-counter></button-counter>
+  <button-counter></button-counter>
+</div>
+```
+Este ejemplo renderizara tres veces el componente `button-counter`. Cada vez que se renderiza el componente este lo hace como una nueva instancia, provocando que sus propiedades sean independientes de las demas instancias del mismo tipo.
+
+### `data` debe ser una funcion
+Cuando se define el componente `<button-couner>`. Para que las propiedades de la instancia sean independientes ante las demas instancias de este componente, la propiedad `data` debe ser declarada como una funcion asi cada instancia tendra una copia de la informacion retornada.
+```javascript
+data: function () {
+  return {
+    count: 0
+  }
+}
+```
+## Organizando componentes
+Es frecuente organizar una aplicacion como un arbol de componentes encadenados. Para hacer uso de los componentes en las plantillas, estos deben estar registrados para que Vue los reconozca. Este registro puede ser de manera global o de manera local. 
+Los componentes registrados globalmente usando `Vue.component('component-name'{..options..})` pueden ser usados en la plantilla de cuaquier instancia raiz de Vue, incluso en sus componentes internos.
+
+## Pasando informacion a componentes internos
+`Props` son atributos personalizados que pueden ser registrado en un componente. Cuando el valor es asignado a un atributo `prop`, este se vuelve una propiedad en la instancia de este componente. Para pasar un `prop` a un componente, se puede incluir este atributo en la lista de `props` de dicho componente usando la opcion `props`.
+```javascript
+Vue.component('blog-post', {
+  props: ['title'],
+  template: '<h3>{{ title }}</h3>'
+})
+```
+```html
+<blog-post title="My journey with Vue"></blog-post>
+<blog-post title="Blogging with Vue"></blog-post>
+<blog-post title="Why Vue is so fun"></blog-post>
+```
+Resultado
+```
+My journey with Vue
+Blogging with Vue
+Why Vue is son fun
+```
+La directiva `v-for` puede ser usada para iterar sobre un arreglo u objeto del componente padre y crear un componente por cada elemento de esta lista, vinculando la informacion de dicho elemento haciendo uso de la directiva `v-bind`. 
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:title="post.title"
+></blog-post>
+```
+## Elemento con raiz unica
+Aunque casi todos los componentes suelen tener mas de un solo elemento interno, Vuejs no permite que exista mas de un elemento en la raiz del componente, para solucionar esto todos los componenetes deben tener todo su contenido agrupado
+por un elemento padre.
+```html
+<div class="blog-post">
+  <h3>{{ title }}</h3>
+  <div v-html="content"></div>
+</div>
+```
+Al mismo que los componentes crecen, es probable que los atributos de dicho componenten tambien aumenten, como mejor practiva de programacion, se sugiere agrupar estos atributos.
+```html
+<blog-post
+  v-for="post in posts"
+  v-bind:key="post.id"
+  v-bind:post="post"
+></blog-post>
+```
+```javascript
+Vue.component('blog-post', {
+  props: ['post'],
+  template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <div v-html="post.content"></div>
+    </div>
+  `
+})
+```
+## Escuachando eventos de componentes internos
+Al momento de desarrollar aplicaciones suele ser necesario que los componentes internos se comuniquen de vuelta con el componente padre. Se puede definir una instancia de VUe que contenga todos las instancias del componente `blog-post` y vincular el tamaño de la fuente de todas estas instancias con la propiedad `postFontSize`.
+```javscript
+new Vue({
+  el: '#blog-posts-events-demo',
+  data: {
+    posts: [/* ... */],
+    postFontSize: 1
+  }
+})
+```
+```html
+<div id="blog-posts-events-demo">
+  <div :style="{ fontSize: postFontSize + 'em' }">
+    <blog-post
+      v-for="post in posts"
+      v-bind:key="post.id"
+      v-bind:post="post"
+    ></blog-post>
+  </div>
+</div>
+```
+Ademas se puede agregar un boton que emita un evento para aumentar el tamaño de la fuente, haciendo uso del metodo de contruccion interno `$emit`.
+```javascript
+Vue.component('blog-post', {
+  props: ['post'],
+  template: `
+    <div class="blog-post">
+      <h3>{{ post.title }}</h3>
+      <button v-on:click="$emit('enlarge-text')">
+        Enlarge text
+      </button>
+      <div v-html="post.content"></div>
+    </div>
+  `
+})
+```
+Y hacer uso de la directiva `v-on` para ejecutar una expresion cuando el evento `enlarge-text` sea accionado.
+
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="postFontSize += 0.1"
+></blog-post>
+```
+### Emitienedo un valor con un evento
+Para emitir un evento con un valor, el valor puede ser emitido como segundo parametro haciendo uso del mismo metodo `$emit`.
+```html
+button v-on:click="$emit('enlarge-text', 0.1)">
+  Enlarge text
+</button>
+```
+Este valor sera accesible al elemento padre por medio de `$event`.
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="postFontSize += $event"
+></blog-post>
+```
+o si la expresion asignada para manejar dicho evento es un metodo, este lo recebira como parametro.
+```html
+<blog-post
+  ...
+  v-on:enlarge-text="onEnlargeText"
+></blog-post>
+```
+```javascript
+methods: {
+  onEnlargeText: function (enlargeAmount) {
+    this.postFontSize += enlargeAmount
+  }
+}
+```
+### Usando `v-model` en componentes
+Eventos personalizados tambien pueden ser usados para crear inputs personalizados que trabajen con la directiva `v-model`.
+```html
+<input v-model="searchText">
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
+```
 ```
 ```
 ```
