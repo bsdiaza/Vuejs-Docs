@@ -691,3 +691,445 @@ computed: {
   }
 }
 ```
+### Sintaxis de arreglo
+Un arreglo puede proveerse con `v-bind:class` para aplicar una lista de clases
+```html
+<div v-bind:class="[activeClass, errorClass]"></div>
+```
+```javascript
+data: {
+  activeClass: 'active',
+  errorClass: 'text-danger'
+}
+```
+Tambien se puede adjuntar una clase en una lista condicional con una expresion ternaria
+```html
+<div v-bind:class="[isActive ? activeClass : '', errorClass]"></div>
+```
+### Con componentes
+Cuando se use el atributo `clase` en un componente personalizado, esas clases seran agregadas al elemento raiz del componente. Pero las clases existentes de este elemento no seran sobre escritas.
+```javascript
+Vue.component('my-component', {
+  template: '<p class="foo bar">Hi</p>'
+})
+```
+Luego se pueden agregar alguas clases cuando este componente sea usado
+```html
+<my-component class="baz boo"></my-component>
+```
+El HTML renderizado sera
+```html
+<p class="foo bar baz boo">Hi</p>
+```
+## Vinculacion de estilos
+### Sintaxis de objeto
+La vinculacion de estilos usando `v-bind:style` es bastante parecida a CSS nativo, por medio de un objeto.
+```html
+<div v-bind:style="{ color: activeColor, fontSize: fontSize + 'px' }"></div>
+```
+```javascript
+data: {
+  activeColor: 'red',
+  fontSize: 30
+}
+```
+Aunque es como mejor practica es mejor vincular el objeto directamente
+```html
+<div v-bind:style="styleObject"></div>
+```
+```javascript
+data: {
+  styleObject: {
+    color: 'red',
+    fontSize: '13px'
+  }
+}
+```
+### Sintaxis de arreglo
+La sintaxis de arreglo para `v-bind:style` permite aplicar multiples objetos de estilo en el mismo elemento
+```html
+<div v-bind:style="[baseStyles, overridingStyles]"></div>
+```
+### Auto prefijo
+Cuando se usa una propiedad CSS que requiera prefijos en el atributo `v-bind:style`, como `transform`, VUe detectara automaticamente estas propiedades y agregara los prefijos apropiados a los estilos aplicados.
+
+### Valores multiples
+Puede preveerse arroglos de multiples prefijos para una propiedad del estilo
+```html
+<div v-bind:style="{ display: ['-webkit-box', '-ms-flexbox', 'flex'] }"></div>
+```
+Esto solo renderizara el ultimo valor en el arreglo que el buscador soporte.
+
+# Renderizacion condicional
+## `v-if`
+La directiva `v-if` es usada para renderizar de manera condicional un bloque HTML. El bloque sera renderizado si la expresion retorna un valor verdadero.
+### Grupos condicionales con `v-if` en `<template>`
+Debido a que `v-if` es una directiva, debe ser agregado a un elemento unitario. Pero si se desea reenderizar de manera condiconal mas de un elemento en este caso se puede utilizar `<template>` como un agrupador de elementos invisible.
+```html
+<template v-if="ok">
+  <h1>Title</h1>
+  <p>Paragraph 1</p>
+  <p>Paragraph 2</p>
+</template>
+```
+### `v-else`
+Puede ser usada la directiva `v-else` para  indicar una condicion encadenada `else` para la directiva inicial `v-if`
+```html
+<div v-if="Math.random() > 0.5">
+  Now you see me
+</div>
+<div v-else>
+  Now you don't
+</div>
+```
+El elemento que hara uso de la directiva `v-else` debe seguir inmediatamente al elemento que hace uso de la directiva `v-if`
+### `v-else-if`
+Asi mismo la directiva `v-else-if` como un condicional encadenado.
+```html
+<div v-if="type === 'A'">
+  A
+</div>
+<div v-else-if="type === 'B'">
+  B
+</div>
+<div v-else-if="type === 'C'">
+  C
+</div>
+<div v-else>
+  Not A/B/C
+</div>
+```
+Asi como la directiva `v-else`, la directiva `v-else-if` debe ir inmediatamente despues del elemento que hace uso de la directiva `v-if`
+
+### Controlando elementos reutilizables
+Vue intentara renderizar los elementos de la manera mas eficiente posible, frecuentemente re-usandolos en vez de renderizarlos de nuevo. 
+
+```html
+<template v-if="loginType === 'username'">
+  <label>Username</label>
+  <input placeholder="Enter your username">
+</template>
+<template v-else>
+  <label>Email</label>
+  <input placeholder="Enter your email address">
+</template>
+```
+En este caso el elemento `<input>` sera detectado como reutilizable y no sera renderizado de nuevo, solo se cambiara su atributo `placeholder` manteniendo el valor alamacenado dentro de este `<input>`, al momento cambiar la propiedad `loginType` entre los dos valores establecidos.
+
+Aunque debido a los requerimientos de la aplicacion este comportamiento puede no ser siempre deseable, en estos casos existe la posibilidad de aclarar que estos elementos son completamente diferentes haciendo uso de la directiva `key`.
+```html
+<template v-if="loginType === 'username'">
+  <label>Username</label>
+  <input placeholder="Enter your username" key="username-input">
+</template>
+<template v-else>
+  <label>Email</label>
+  <input placeholder="Enter your email address" key="email-input">
+</template>
+```
+Ahora estos elementos seran renderizados como elemntos nuevos al momento de cambiar la propiedad `loginType`.
+
+## `v-show`
+Otra opcion para renderizar de manea condicional un elemento es la directiva `v-show`. EL uso y resultado es casi el mismo.
+```html
+<h1 v-show="ok">Hello!</h1>
+```
+La principal diferencia es que el elemento seguira renderizado y permanecera en el DOM, pero la propiedad `display` del estilo es actualizada para que el elemento no sea visualizado.
+
+## `v-if`vs`v-show`
+`v-if` destruye y crea los elementos relacionados al momento del cambio, ademas de ser ejecuatado de manera perezosa, renderizando los elementos solo hasta que el valor de la  expresion sea verdadera, teniendo un mayor costo al momento del cambio del valor de la expresion.
+`v-show` por otro lado solo "esconde" los elementos segun el valor de la expresion, teniendo un mayor costo de renderizacion inicial ya que los elementos son igualmente renderizados.
+## `v-if` con `v-for`
+Aunque no es recomendable hacer uso de las directivas `v-if` y `v-for` juntas. En caso de ser usadas de esta manera, la directiva `v-for` tiene  una mayor precedencia que la directiva `v-if` al momento de ser evaluadas.
+
+# Renderizando listas
+## Mapear arreglos a elementos con `v-for`
+La directiva `v-for` puede ser usada para renderizar una lista de items basada en un arreglo. La sintaxis para hacer uso de esta directiva con un arreglo de items es `item in items`, donde item es el alias del elemento iterble del arreglo.
+```html
+<ol id="example-1">
+  <li v-for="item in items">
+    {{ item.message }}
+  </li>
+</ol>
+```
+```javascript
+var example1 = new Vue({
+  el: '#example-1',
+  data: {
+    items: [
+      { message: 'Foo' },
+      { message: 'Bar' }
+    ]
+  }
+})
+```
+Resultado
+```
+1. Foo
+2. Bar
+```
+Dentro de los bloques se tiene completo acceso a las propiedades de las propiedades del padre. `v-for` ademas soporta un segundo argumento opcionarl para representar la posicion del elemento dentro de la lista.
+```html
+<ol id="example-2">
+  <li v-for="(item, index) in items">
+    {{ parentMessage }} - {{ index }} - {{ item.message }}
+  </li>
+</ol>
+```
+
+```javascript
+var example2 = new Vue({
+  el: '#example-2',
+  data: {
+    parentMessage: 'Parent',
+    items: [
+      { message: 'Foo' },
+      { message: 'Bar' }
+    ]
+  }
+})
+```
+Resultado
+```
+1. Parent - 0 - Foo
+2. Parent - 1 - Bar
+```
+## `v-for` con objetos
+Tambien puede ser usada la directiva `v-for` para iterar a traves de propiedades de un objeto. 
+```html
+<ol id="v-for-object" class="demo">
+  <li v-for="value in object">
+    {{ value }}
+  </li>
+</ol>
+```
+```javascript
+new Vue({
+  el: '#v-for-object',
+  data: {
+    object: {
+      title: 'How to do lists in Vue',
+      author: 'Jane Doe',
+      publishedAt: '2016-04-10'
+    }
+  }
+})
+```
+
+
+```
+1. How to do lists in Vue
+2. Jane Doe
+3. 2016-04-10
+```
+Tambien puede usarse un segundo argumento para el nombre de la propiedad del objeto, y un tercero para la posicion del objeto dentro de la propiedad.
+```html
+<div v-for="(value, name, index) in object">
+  {{ index }}. {{ name }}: {{ value }}
+</div>
+```
+```
+1. title: How to do lists in Vue
+2. author: Jane Doe
+3. publishedAt: 2016-04-10
+```
+## Manteniendo estado
+Cuando Vue se encuentra actualizando una lista de elementos renderizados con la directiva `v-for`, por defecto actualizara cada posicion de la lista con la informacion del elemento que ahora ocupa dicha posicion. Este modo por defecto es eficiente pero solo es apropiado cuando cando la visualizacion de la inforamcion no recae en componentes internos. 
+
+Para darle a Vue una pista para que pueda hacer un seguimiento mas apropiado a cada item de la lista, se sugiere usar el atributo `key`, para que Vue pueda reusar y reorganizar los elementos de la lista.
+```html
+<div v-for="item in items" v-bind:key="item.id">
+  <!-- content -->
+</div>
+```
+## Deteccion de cambios en arreglos
+
+### Metodos de mutacion
+Vue contiene un grupo de metodos de mutacion para arrelos que tambien activaran la actualizacion de las vistas.
+* `push()`
+* `pop()`
+* `shift()`
+* `unshift()`
+* `splice()`
+* `sort()`
+* `reverse()`
+
+### Remplazando un arreglo
+
+Existen metodos que no mutan el arreglo original pero si retornan un nuevo arreglo, como lo son `filter()`, `concat()` y `slice()`. Cuando se utilicen este tipo de metodos se puede remplazar el arreglo antguo con el nuevo.
+```javscript
+example1.items = example1.items.filter(function (item) {
+  return item.message.match(/Foo/)
+})
+```
+### Advertencias
+Debido a limitaciones en javascript, Vue no puede detectar algunas mutaciones, pero existen alternativas que lo permiten.
+```javascript
+// Arreglos
+var vm = new Vue({
+  data: {
+    items: ['a', 'b', 'c']
+  }
+})
+vm.items[1] = 'x' // NO reactivo
+vm.items.length = 2 // NO reactivo
+Vue.set(vm.items, indexOfItem, newValue) // Reactivo
+vm.items.splice(indexOfItem, 1, newValue) // Reactivo
+```
+```javascript
+// Objetos
+var vm = new Vue({
+  data: {
+    a: 1
+  }
+})
+// `vm.a` es reactivo
+vm.b = 2
+// `vm.b` NO es reactivo
+// Vue.set(vm, 'b', 2) Reactivo
+```
+### Visualizando resultados filtrados u organizados
+Para visualizar un arreglo filtrado u organizado pero sin actualmente alterar el arreglo original se puede hacer uso de una propiedad calculada que retorne el arreglo de la manera deseada.
+```html
+<li v-for="n in evenNumbers">{{ n }}</li>
+```
+```javascript
+data: {
+  numbers: [ 1, 2, 3, 4, 5 ]
+},
+computed: {
+  evenNumbers: function () {
+    return this.numbers.filter(function (number) {
+      return number % 2 === 0
+    })
+  }
+}
+```
+En casos en los que una propiedad calculada no sea factible, puede ser usado un metodo que cumpla la misma funcion.
+```html
+<li v-for="n in even(numbers)">{{ n }}</li>
+``` 
+```javascript
+data: {
+  numbers: [ 1, 2, 3, 4, 5 ]
+},
+methods: {
+  even: function (numbers) {
+    return numbers.filter(function (number) {
+      return number % 2 === 0
+    })
+  }
+}
+```
+### `v-for` con rango
+La directiva `v-for` puede tomar tambien un entero como parametro. En este caso repetira la plantilla ese numero de veces.
+```html 
+<div>
+  <span v-for="n in 10">{{ n }} </span>
+</div>
+```
+Resultado
+```
+1 2 3 4 5 6 7 8 9 10
+```
+### `v-for` con un componente
+
+La directiva `v-for` puede ser directamente usada sobre un componente.
+```html
+<my-component v-for="item in items" :key="item.id"></my-component>
+```
+de cualquier manera esto no proporcionara los parametros directamente al componente. Para hacer eso estos parametros deben ser proporcionados de manera especifica.
+```html
+<my-component
+  v-for="(item, index) in items"
+  v-bind:item="item"
+  v-bind:index="index"
+  v-bind:key="item.id"
+></my-component>
+```
+# Soporte de eventos
+## Escuchando eventos
+La directiva `v-on` puede ser usada oara escuchar los eventos del DOM y ejecutar funciones cuando estos eventos son accionados.
+```html
+<div id="example-1">
+  <button v-on:click="counter += 1">Add 1</button>
+  <p>The button above has been clicked {{ counter }} times.</p>
+</div>
+```
+```javascript
+var example1 = new Vue({
+  el: '#example-1',
+  data: {
+    counter: 0
+  }
+})
+```
+## Mentodos manejadores de eventos
+La logica para muchos eventos no es sencilla y mantener esa funcionalidad en la expresion de la directiva `v-on` no es factible. En este caso VUe permite hacer llamado de metodos que realicen dicah funcionalidad.
+```html
+<div id="example-2">
+  <button v-on:click="greet">Greet</button>
+</div>
+```
+```javscript
+var example2 = new Vue({
+  el: '#example-2',
+  data: {
+    name: 'Vue.js'
+  },
+  //los metodos deben ser difinidos dentro del objeto metodo
+  methods: {
+    greet: function (event) {
+      // `this` dentro de los metodos apunta a la instancia Vue
+      alert('Hello ' + this.name + '!')
+      // `event` es nativo de DOM
+      if (event) {
+        alert(event.target.tagName)
+      }
+    }
+  }
+})
+```
+## Merodos anejados en linea
+En vez de vincular directamente el nombre de un metodo, tambien estos metodos pueden ser usados como en ejecucion de codigo javascript.
+```html
+<div id="example-3">
+  <button v-on:click="say('hi')">Say hi</button>
+  <button v-on:click="say('what')">Say what</button>
+</div>
+```
+```javascript
+new Vue({
+  el: '#example-3',
+  methods: {
+    say: function (message) {
+      alert(message)
+    }
+  }
+})
+```
+Para acceder al evento original del DOM en un estado manejado. El evento puede ser proporcionado como para metro con `$event`.
+```html
+<button v-on:click="warn('Form cannot be submitted yet.', $event)">
+  Submit
+</button>
+```
+```javscript
+methods: {
+  warn: function (message, event) {
+    // ahora se tiene acceso al evento nativo
+    if (event) event.preventDefault()
+    alert(message)
+  }
+}
+```
+## Modificadores de eventos
+
+```
+```
+```
+```
+```
+```
+```
+```
