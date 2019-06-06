@@ -1468,25 +1468,117 @@ Eventos personalizados tambien pueden ser usados para crear inputs personalizado
 ```html
 <input v-model="searchText">
 ```
+tiene la misma funcionalidad que:
+```html
+<input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event.target.value"
+>
 ```
+Cuando la directiva `v-model` es usada en un componente, en vez de vincularlo de la siguiente manera.
+```html
+<custom-input
+  v-bind:value="searchText"
+  v-on:input="searchText = $event"
+></custom-input>
 ```
+Para que el elemento `input` se debe vincular su atributo `value` con el `prop` y al accionar el evento `input`emitir el mismo evento al padre con su valor.
+```javascript
+Vue.component('custom-input', {
+  props: ['value'],
+  template: `
+    <input
+      v-bind:value="value"
+      v-on:input="$emit('input', $event.target.value)"
+    >
+  `
+})
 ```
+```html
+<custom-input v-model="searchText"></custom-input>
 ```
+### Distribucion de contenido con parametros
+Asi como elementos HTML, suele ser util ser capaz de pasar contenido a un componente.
+```html
+<alert-box>
+  Something bad happened.
+</alert-box>
 ```
+Lo cual deberia renderizar el texto dentro del componente `alert-box`. Para hacer que esto funcione debe ser utilizada la etiqueta slot, para especificar en que parte del componente debe ser renderizado dicho componenete.
+```html
+Vue.component('alert-box', {
+  template: `
+    <div class="demo-alert-box">
+      <strong>Error!</strong>
+      <slot></slot>
+    </div>
+  `
+})
 ```
+### Componentes dinamicos
+Para renderizar dinamicamene componentes que puede ocupar un mismo espacio y que estos sean intercambiables puede ser usado el elemento Vue `<component>`, para que Vue reconozca que lo que va a ser renderizado por este elemento es un componente previamete registrado, junto con el atributo especial `is`, que sirve para especificar el identificador o el objeto que contenga la informacion del componente  que se va a renderizar en este elemento.
+```html
+<component v-bind:is="currentTabComponent"></component>
 ```
+Ejempl
+```html
+<div id="dynamic-component-demo" class="demo">
+  <button
+    v-for="tab in tabs"
+    v-bind:key="tab.name"
+    v-bind:class="['tab-button', { active: currentTab.name === tab.name }]"
+    v-on:click="currentTab = tab"
+  >{{ tab.name }}</button>
+
+  <component
+    v-bind:is="currentTab.component"
+    class="tab"
+  ></component>
+</div>
 ```
+```javascript
+var tabs = [
+  {
+    name: 'Home', 
+    component: { 
+      template: '<div>Home component</div>' 
+    }
+  },
+  {
+    name: 'Posts',
+    component: {
+      template: '<div>Posts component</div>'
+    }
+  },
+  {
+    name: 'Archive',
+    component: {
+      template: '<div>Archive component</div>',
+    }
+  }
+]
+
+new Vue({
+  el: '#dynamic-component-demo',
+  data: {
+  	tabs: tabs,
+    currentTab: tabs[0]
+  }
+})
 ```
+### Manejando advertencias dentro de la plantilla DOM
+Algunos elementos HTML como `<ul>`,`<ol>`,`<table>` y `<select>` tienen restricciones sobre que elementos pueden aparecer dentro de ellos, y ciertos elementos como `<li>`, `<tr>` y `<option>` pueden solo aparecer dentro de ciertos elementos tambien.
+Esto generara conflico cuando componentes sean usados con elementos que tengan dicha restriccion.
+```html
+<table>
+  <blog-post-row></blog-post-row>
+</table>
 ```
-```
-```
-```
-```
-```
-```
-```
-```
-```
+El componente personalizado `<blog-post-row>` sera detectado como contenido invalido, causando errores. Para hacer uso de componetes con estos elementos restringidos se debe utilizar el atributo esecial `is`.
+```html
+<table>
+  <tr is="blog-post-row"></tr>
+</table>
 ```
 ```
 ```
